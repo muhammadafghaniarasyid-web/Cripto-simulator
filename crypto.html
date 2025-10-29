@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Cryptocurrency</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2962ff;
+            --success: #00c853;
+            --danger: #ff1744;
+            --dark: #121212;
+            --light: #f5f5f5;
+            --gray: #424242;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--gray);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1rem;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .price-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .current-price {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .price-change {
+            font-size: 1.2rem;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        .positive {
+            color: var(--success);
+            background-color: rgba(0, 200, 83, 0.1);
+        }
+        
+        .negative {
+            color: var(--danger);
+            background-color: rgba(255, 23, 68, 0.1);
+        }
+        
+        .chart-container {
+            height: 300px;
+        }
+        
+        .trading-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .trading-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid var(--gray);
+            background-color: #2a2a2a;
+            color: var(--light);
+            font-size: 1rem;
+        }
+        
+        button {
+            background-color: var(--primary);
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #1e4fff;
+        }
+        
+        .buy-btn {
+            background-color: var(--success);
+        }
+        
+        .buy-btn:hover {
+            background-color: #00b248;
+        }
+        
+        .sell-btn {
+            background-color: var(--danger);
+        }
+        
+        .sell-btn:hover {
+            background-color: #e0143c;
+        }
+        
+        .portfolio {
+            margin-top: 30px;
+        }
+        
+        .portfolio-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #252525;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .transaction-history {
+            margin-top: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray);
+        }
+        
+        th {
+            color: #aaa;
+            font-weight: normal;
+        }
+        
+        .transaction-buy {
+            color: var(--success);
+        }
+        
+        .transaction-sell {
+            color: var(--danger);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray);
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Simulasi Cryptocurrency</h1>
+            <p class="subtitle">Simulasi perdagangan cryptocurrency dengan algoritma harga real-time</p>
+        </header>
+        
+        <div class="dashboard">
+            <div class="card price-card">
+                <h2>Harga Saat Ini</h2>
+                <div class="current-price" id="currentPrice">$0.00</div>
+                <div class="price-change" id="priceChange">+0.00%</div>
+            </div>
+            
+            <div class="card">
+                <h2>Grafik Harga</h2>
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="trading-section">
+            <div class="card">
+                <h2>Beli Cryptocurrency</h2>
+                <div class="form-group">
+                    <label for="buyAmount">Jumlah (USD)</label>
+                    <input type="number" id="buyAmount" min="1" value="100">
+                </div>
+                <div class="form-group">
+                    <label for="buyQuantity">Kuantitas Crypto</label>
+                    <input type="number" id="buyQuantity" min="0.001" step="0.001" readonly>
+                </div>
+                <button class="buy-btn" id="buyButton">Beli</button>
+            </div>
+            
+            <div class="card">
+                <h2>Jual Cryptocurrency</h2>
+                <div class="form-group">
+                    <label for="sellAmount">Jumlah (USD)</label>
+                    <input type="number" id="sellAmount" min="1" value="100">
+                </div>
+                <div class="form-group">
+                    <label for="sellQuantity">Kuantitas Crypto</label>
+                    <input type="number" id="sellQuantity" min="0.001" step="0.001" readonly>
+                </div>
+                <button class="sell-btn" id="sellButton">Jual</button>
+            </div>
+        </div>
+        
+        <div class="card portfolio">
+            <h2>Portfolio Anda</h2>
+            <div class="portfolio-stats">
+                <div class="stat-card">
+                    <div class="stat-label">Total Investasi</div>
+                    <div class="stat-value" id="totalInvestment">$0.00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Jumlah Crypto</div>
+                    <div class="stat-value" id="cryptoHeld">0.000</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Nilai Portfolio</div>
+                    <div class="stat-value" id="portfolioValue">$0.00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Keuntungan/Rugi</div>
+                    <div class="stat-value" id="profitLoss">$0.00</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card transaction-history">
+            <h2>Riwayat Transaksi</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Tipe</th>
+                        <th>Kuantitas</th>
+                        <th>Harga</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionHistory">
+                    <!-- Riwayat transaksi akan ditampilkan di sini -->
+                </tbody>
+            </table>
+        </div>
+        
+        <footer>
+            <p>Simulasi Cryptocurrency - Hanya untuk tujuan edukasi</p>
+        </footer>
+    </div>
+
+    <script>
+        // Inisialisasi variabel
+        let currentPrice = 50000; // Harga awal dalam USD
+        let priceHistory = [];
+        let cryptoHeld = 0;
+        let totalInvestment = 0;
+        let transactionHistory = [];
+        let priceChangePercentage = 0;
+        
+        // Elemen DOM
+        const currentPriceElement = document.getElementById('currentPrice');
+        const priceChangeElement = document.getElementById('priceChange');
+        const buyAmountInput = document.getElementById('buyAmount');
+        const buyQuantityInput = document.getElementById('buyQuantity');
+        const sellAmountInput = document.getElementById('sellAmount');
+        const sellQuantityInput = document.getElementById('sellQuantity');
+        const buyButton = document.getElementById('buyButton');
+        const sellButton = document.getElementById('sellButton');
+        const totalInvestmentElement = document.getElementById('totalInvestment');
+        const cryptoHeldElement = document.getElementById('cryptoHeld');
+        const portfolioValueElement = document.getElementById('portfolioValue');
+        const profitLossElement = document.getElementById('profitLoss');
+        const transactionHistoryElement = document.getElementById('transactionHistory');
+        
+        // Inisialisasi grafik
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        const priceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Harga Crypto (USD)',
+                    data: [],
+                    borderColor: '#2962ff',
+                    backgroundColor: 'rgba(41, 98, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#aaa'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#aaa'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#aaa'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Fungsi untuk memperbarui harga
+        function updatePrice() {
+            // Simulasi pergerakan harga dengan random walk
+            const change = (Math.random() - 0.5) * 1000; // Perubahan antara -500 sampai +500
+            const newPrice = Math.max(1000, currentPrice + change); // Harga minimal $1000
+            
+            // Hitung persentase perubahan
+            priceChangePercentage = ((newPrice - currentPrice) / currentPrice) * 100;
+            
+            // Perbarui harga saat ini
+            currentPrice = newPrice;
+            
+            // Tambahkan ke riwayat harga
+            priceHistory.push(currentPrice);
+            if (priceHistory.length > 50) {
+                priceHistory.shift();
+            }
+            
+            // Perbarui tampilan
+            currentPriceElement.textContent = `$${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            
+            // Perbarui indikator perubahan harga
+            priceChangeElement.textContent = `${priceChangePercentage >= 0 ? '+' : ''}${priceChangePercentage.toFixed(2)}%`;
+            priceChangeElement.className = `price-change ${priceChangePercentage >= 0 ? 'positive' : 'negative'}`;
+            
+            // Perbarui grafik
+            updateChart();
+            
+            // Perbarui nilai portfolio
+            updatePortfolio();
+            
+            // Perbarui kuantitas pembelian dan penjualan
+            updateQuantities();
+        }
+        
+        // Fungsi untuk memperbarui grafik
+        function updateChart() {
+            // Perbarui label (waktu)
+            const labels = [];
+            for (let i = 0; i < priceHistory.length; i++) {
+                labels.push('');
+            }
+            
+            // Perbarui data grafik
+            priceChart.data.labels = labels;
+            priceChart.data.datasets[0].data = priceHistory;
+            priceChart.update();
+        }
+        
+        // Fungsi untuk memperbarui kuantitas pembelian dan penjualan
+        function updateQuantities() {
+            const buyAmount = parseFloat(buyAmountInput.value) || 0;
+            const sellAmount = parseFloat(sellAmountInput.value) || 0;
+            
+            buyQuantityInput.value = (buyAmount / currentPrice).toFixed(6);
+            sellQuantityInput.value = (sellAmount / currentPrice).toFixed(6);
+        }
+        
+        // Fungsi untuk memperbarui portfolio
+        function updatePortfolio() {
+            const portfolioValue = cryptoHeld * currentPrice;
+            const profitLoss = portfolioValue - totalInvestment;
+            
+            totalInvestmentElement.textContent = `$${totalInvestment.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            cryptoHeldElement.textContent = cryptoHeld.toFixed(6);
+            portfolioValueElement.textContent = `$${portfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            
+            profitLossElement.textContent = `$${profitLoss.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            profitLossElement.style.color = profitLoss >= 0 ? '#00c853' : '#ff1744';
+        }
+        
+        // Fungsi untuk menambah transaksi
+        function addTransaction(type, quantity, price, total) {
+            const now = new Date();
+            const transaction = {
+                date: now.toLocaleString(),
+                type,
+                quantity,
+                price,
+                total
+            };
+            
+            transactionHistory.unshift(transaction);
+            
+            // Batasi riwayat transaksi hingga 10 entri terbaru
+            if (transactionHistory.length > 10) {
+                transactionHistory.pop();
+            }
+            
+            // Perbarui tampilan riwayat transaksi
+            updateTransactionHistory();
+        }
+        
+        // Fungsi untuk memperbarui riwayat transaksi
+        function updateTransactionHistory() {
+            transactionHistoryElement.innerHTML = '';
+            
+            transactionHistory.forEach(transaction => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${transaction.date}</td>
+                    <td class="transaction-${transaction.type}">${transaction.type === 'buy' ? 'Beli' : 'Jual'}</td>
+                    <td>${transaction.quantity.toFixed(6)}</td>
+                    <td>$${transaction.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td>$${transaction.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                `;
+                
+                transactionHistoryElement.appendChild(row);
+            });
+        }
+        
+        // Event listener untuk pembelian
+        buyButton.addEventListener('click', () => {
+            const amount = parseFloat(buyAmountInput.value);
+            
+            if (isNaN(amount) || amount <= 0) {
+                alert('Masukkan jumlah yang valid untuk pembelian');
+                return;
+            }
+            
+            const quantity = amount / currentPrice;
+            
+            // Perbarui portfolio
+            cryptoHeld += quantity;
+            totalInvestment += amount;
+            
+            // Tambahkan transaksi
+            addTransaction('buy', quantity, currentPrice, amount);
+            
+            // Perbarui tampilan
+            updatePortfolio();
+            
+            // Reset input
+            buyAmountInput.value = '';
+            updateQuantities();
+            
+            alert(`Berhasil membeli ${quantity.toFixed(6)} crypto seharga $${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        });
+        
+        // Event listener untuk penjualan
+        sellButton.addEventListener('click', () => {
+            const amount = parseFloat(sellAmountInput.value);
+            
+            if (isNaN(amount) || amount <= 0) {
+                alert('Masukkan jumlah yang valid untuk penjualan');
+                return;
+            }
+            
+            const quantity = amount / currentPrice;
+            
+            if (quantity > cryptoHeld) {
+                alert('Anda tidak memiliki cukup crypto untuk dijual');
+                return;
+            }
+            
+            // Perbarui portfolio
+            cryptoHeld -= quantity;
+            totalInvestment -= amount;
+            
+            // Tambahkan transaksi
+            addTransaction('sell', quantity, currentPrice, amount);
+            
+            // Perbarui tampilan
+            updatePortfolio();
+            
+            // Reset input
+            sellAmountInput.value = '';
+            updateQuantities();
+            
+            alert(`Berhasil menjual ${quantity.toFixed(6)} crypto seharga $${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        });
+        
+        // Event listener untuk input pembelian
+        buyAmountInput.addEventListener('input', updateQuantities);
+        
+        // Event listener untuk input penjualan
+        sellAmountInput.addEventListener('input', updateQuantities);
+        
+        // Inisialisasi
+        function init() {
+            // Isi riwayat harga dengan data awal
+            for (let i = 0; i < 50; i++) {
+                priceHistory.push(currentPrice + (Math.random() - 0.5) * 1000);
+            }
+            
+            // Perbarui tampilan awal
+            updatePrice();
+            updateQuantities();
+            updatePortfolio();
+            updateTransactionHistory();
+            
+            // Mulai simulasi pergerakan harga
+            setInterval(updatePrice, 2000); // Perbarui harga setiap 2 detik
+        }
+        
+        // Jalankan inisialisasi
+        init();
+    </script>
+</body>
+</html>
